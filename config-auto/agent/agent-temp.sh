@@ -48,7 +48,7 @@ sudo apt-get -y update
 sudo DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install docker-ce
 systemctl disable --now ufw && systemctl disable --now iptables
 
-wget -O daemon.json https://cdn.moran233.xyz/https://raw.githubusercontent.com/MoRan23/GZCTF-Auto/main/config-auto/docker/daemon.json
+wget -O daemon.json https://github.com/ads-freed/GZCTF-Auto/main/config-auto/docker/daemon.json
 sed -i "s|\[\"[^\"]*\"\]|\[\"$source_add\"\]|g" daemon.json
 mv daemon.json /etc/docker/
 sudo systemctl daemon-reload && sudo systemctl restart docker
@@ -69,10 +69,10 @@ else
     curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_EXEC="--docker" INSTALL_K3S_MIRROR=cn K3S_URL=https://SERVER:6443 K3S_TOKEN=mynodetoken sh -
 fi
 curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_EXEC="--docker" INSTALL_K3S_MIRROR=cn K3S_URL=https://SERVER:6443 K3S_TOKEN=mynodetoken sh -
-wget -O kubelet.config https://cdn.moran233.xyz/https://raw.githubusercontent.com/MoRan23/GZCTF-Auto/main/config-auto/k3s/kubelet.config
+wget -O kubelet.config https://github.com/ads-freed/GZCTF-Auto/main/config-auto/k3s/kubelet.config
 mkdir -p /etc/rancher/k3s/
 mv kubelet.config /etc/rancher/k3s/
-wget -O registries.yaml https://cdn.moran233.xyz/https://raw.githubusercontent.com/MoRan23/GZCTF-Auto/main/config-auto/k3s/registries.yaml
+wget -O registries.yaml https://github.com/ads-freed/GZCTF-Auto/main/config-auto/k3s/registries.yaml
 sed -i "s|https://docker.huhstsec.top|$source_add|g" registries.yaml
 mv registries.yaml /etc/rancher/k3s/
 sed -i '${/^$/d}' /etc/systemd/system/k3s-agent.service
