@@ -1,16 +1,16 @@
 # GZCTF-Auto
   
 ## GZCTF
-项目地址：https://github.com/GZTimeWalker/GZCTF  
-官方文档：https://docs.ctf.gzti.me/zh
+Project address: https://github.com/GZTimeWalker/GZCTF
+Official documentation: https://docs.ctf.gzti.me/zh
 
-## 项目介绍&使用方法
-GZCTF 一键部署  
-现已支持单 `docker` 以及 `docker+k3s` 部署  
-机器人基础功能已经开发完毕！期待使用！  
-[GZCTF-BOT-QQ](https://github.com/MoRan23/GZCTF_BOT_QQ "GZCTF-BOT-QQ")  
-测试环境：ubuntu 22.04 全新机  
-使用方式：  
+## Project Introduction & Usage
+GZCTF one-click deployment
+Now supports single `docker` and `docker+k3s` deployment
+The basic functions of the robot have been developed! Looking forward to using it!
+[GZCTF-BOT-QQ](https://github.com/MoRan23/GZCTF_BOT_QQ "GZCTF-BOT-QQ")
+Test environment: Ubuntu 22.04 brand new machine
+Usage:  
 ```
 wget -O install.sh https://cdn.moran233.xyz/https://raw.githubusercontent.com/MoRan23/GZCTF-Auto/main/install.sh && chmod +x install.sh && ./install.sh
 ```
