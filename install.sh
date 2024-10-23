@@ -2,12 +2,12 @@
 stty erase '^H'
 check(){
     if [ $(id -u) != "0" ]; then
-        echo "请使用root用户执行此脚本！"
+        echo "Please execute this script as root user！"
         exit 1
     fi
     if ! command -v docker &> /dev/null
     then
-        green_echo "Docker-ce 未安装."
+        green_echo "Docker-ce is not installed."
         curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
         sudo add-apt-repository -y "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
         sudo apt-get -y update
@@ -15,20 +15,20 @@ check(){
     else
         if ! dpkg -l | grep docker-ce &> /dev/null
         then
-            green_echo "重装 Docker-ce."
+            green_echo "Reinstall Docker-ce."
             sudo apt-get remove -y docker.io
             curl -fsSL http://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | sudo apt-key add -
             sudo add-apt-repository -y "deb [arch=amd64] http://mirrors.aliyun.com/docker-ce/linux/ubuntu $(lsb_release -cs) stable"
             sudo apt-get -y update
             sudo DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install docker-ce docker-compose-plugin
         else
-            green_echo "Docker-ce 已安装."
+            green_echo "Docker-ce is installed."
             if ! dpkg -l | grep docker-compose-plugin &> /dev/null
             then
-                green_echo "安装 Docker-compose."
+                green_echo "Install Docker-compose."
                 sudo DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install docker-compose-plugin
             else
-                green_echo "Docker-compose 已安装."
+                green_echo "Docker-compose is installed."
             fi
         fi
     fi
@@ -51,7 +51,7 @@ start(){
 }
 
 change_Source(){
-    echo "正在自动换源..."
+    echo "Automatic source change is in progress..."
     if [ -f /etc/os-release ]; then
     . /etc/os-release
     VERSION_ID=$(echo "$VERSION_ID" | tr -d '"')
@@ -59,25 +59,25 @@ change_Source(){
     minor=$(echo "$VERSION_ID" | cut -d '.' -f 2)
     if [ "$major" -lt 24 ] || { [ "$major" -eq 24 ] && [ "$minor" -lt 4 ]; }; then
         sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list
-        green_echo "换源成功！"
+        green_echo "The source change was successful.！"
     else
         sudo sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list.d/ubuntu.sources
-        green_echo "换源成功！"
+        green_echo "The source change was successful.！"
     fi
     else
-        red_echo "/etc/os-release 文件不存在，无法确定系统版本信息。"
-        red_echo "换源失败，请手动换源！"
+        red_echo "/etc/os-release File does not exist to determine system version information。"
+        red_echo "Source change failed, please change source manually！"
     fi
 }
 
 login_docker(){
     while true; do
-        read -p "输入阿里云镜像服务用户名: " username
-        read -p "输入阿里云镜像服务密码: " password
-        read -p "输入阿里云镜像服务公网地址: " address
+        read -p "Enter the AliCloud Mirror Service username: " username
+        read -p "Enter the AliCloud Mirror Service password: " password
+        read -p "Enter the AliCloud Mirror Service public address: " address
         out=$(echo $password | sudo -S docker login --username=$username --password-stdin $address 2>&1)
         if echo "$out" | grep -q "Login Succeeded"; then
-            echo "登录成功!"
+            echo "Log in successfully!"
             sed -i "s|DOCKER_USERNAME|$username|g" ./config-auto/gz/appsettings.json
             sed -i "s|DOCKER_PASSWORD|$password|g" ./config-auto/gz/appsettings.json
             sed -i "s|DOCKER_ADDRESS|$address|g" ./config-auto/gz/appsettings.json
@@ -86,17 +86,17 @@ login_docker(){
             sed -i "s|ADDRESS_OP|$address|g" ./config-auto/agent/agent-temp.sh
             break
         else
-            echo "登录失败，用户名或密码错误，请重新输入！"
+            echo "Login failed, wrong username or password, please re-enter！"
         fi
     done
 }
 
 set_smtp(){
-    read -p "请输入smtp服务器地址: " smtp_server
-    read -p "请输入smtp服务器端口: " smtp_port
-    read -p "请输入smtp服务器用户名: " smtp_username
-    read -p "请输入smtp服务器密码: " smtp_password
-    read -p "请输入发件人邮箱: " smtp_sender
+    read -p "Please enter the smtp server address: " smtp_server
+    read -p "Please enter the smtp server port: " smtp_port
+    read -p "Please enter the smtp username: " smtp_username
+    read -p "Please enter the smtp password: " smtp_password
+    read -p "Please enter the sender's e-mail address: " smtp_sender
     sed -i "s|SMTP_SERVER|$smtp_server|g" ./config-auto/gz/appsettings.json
     sed -i "s|SMTP_PORT|$smtp_port|g" ./config-auto/gz/appsettings.json
     sed -i "s|SMTP_USERNAME|$smtp_username|g" ./config-auto/gz/appsettings.json
@@ -106,19 +106,19 @@ set_smtp(){
 
 set_port(){
     while true; do
-        read -p "请设置GZCTF的端口（默认为81）: " gz_port
+        read -p "Please set the port of GZCTF (default is 81): " gz_port
         if [ -z "$gz_port" ]; then
             gz_port=81
         fi
         case $gz_port in
-            ''|*[!0-9]*) echo "端口号必须为数字，请重新输入！" ;;
+            ''|*[!0-9]*) echo "Port number must be numeric, please re-enter！" ;;
             *) 
                 if [ "$gz_port" -lt 1 ] || [ "$gz_port" -gt 65535 ]; then
-                    echo "端口号必须在 1-65535 之间，请重新输入！"
+                    echo "The port number must be between 1 and 65535, please re-enter the！"
                 else
                     ss -tuln | grep ":$gz_port\b" > /dev/null
                     if [ $? -eq 0 ]; then
-                        echo "端口 $gz_port 已被占用, 请重新输入！"
+                        echo "Ports $gz_port Occupied, please re-enter！"
                     else
                         sed -i "s|PORT|$gz_port|g" ./config-auto/gz/docker-compose.yaml
                         break
@@ -146,111 +146,111 @@ echo "||| |_| |/ /| |___  | | |  _|_____/ ___ \ |_| | || (_) |||"
 echo "|| \____/____\____| |_| |_|      /_/   \_\__,_|\__\___/ ||"
 echo "||                                                      ||"
 echo "=========================================================="
-echo "请选择是否自动换源（目前只支持ubuntu）："
-echo "1) 是"
-echo "2) 否（手动换源）"
+echo "Please choose whether or not to automatically change the source (currently only ubuntu is supported)："
+echo "1) yes"
+echo "2) No (manual source change)"
 while true; do
-    read -p "请输入您的选择: " changeSource
+    read -p "Please enter your selection: " changeSource
 
     case $changeSource in
         1)
-            echo "设置自动换源..."
+            echo "Set up automatic source switching..."
             change_Source
             break
             ;;
         2)
-            echo "设置手动换源..."
+            echo "Set manual source change..."
             break
             ;;
         *)
-            echo "无效的选择，请重新输入！"
+            echo "Invalid selection, please re-enter！"
             ;;
     esac
 done
 
-echo "正在执行初始化，请稍后..."
+echo "Initialization in progress, please wait..."
 start
 check
-echo "初始化成功！请继续配置"
+echo "Initialization successful! Please continue configuration"
 
-echo "请选择部署网络环境："
-echo "1) 内网"
-echo "2) 公网"
+echo "Please select the deployment network environment："
+echo "1) Intranet"
+echo "2) Public"
 while true; do
-    read -p "请输入您的选择: " net
+    read -p "Please enter your selection: " net
 
     case $net in
         1)
-            echo "选择内网部署..."
+            echo "Select Intranet Deployment..."
             private_ip=$(hostname -I | awk '{print $1}')
             sed -i "s|DOMAIN|$private_ip|g" ./config-auto/gz/appsettings.json
             break
             ;;
         2)
-            echo "选择公网部署..."
+            echo "Choose public network deployment..."
             public_ip=$(curl -s https://api.ipify.org)
             IP_ADDR=$(hostname -I | awk '{print $1}')
             if [[ $IP_ADDR =~ ^10\. ]] || [[ $IP_ADDR =~ ^192\.168\. ]] || [[ $IP_ADDR =~ ^172\.1[6-9]\. ]] || [[ $IP_ADDR =~ ^172\.2[0-9]\. ]] || [[ $IP_ADDR =~ ^172\.3[0-1]\. ]]; then
-                echo "主机在 VPC 网络中..."
+                echo "The host is in a VPC network..."
                 VPC=1
             else
-                echo "主机在 经典 网络中..."
+                echo "The host is in a classic network..."
                 VPC=0
             fi
             break
             ;;
         *)
-            echo "无效的选择，请重新输入！"
+            echo "Invalid selection, please re-enter！"
             ;;
     esac
 done
 
-echo "请选择部署方式："
-echo "1) docker部署（适用于小型比赛单机部署）"
-echo "2) docker+k3s部署（适用于大型比赛单机或多机部署）"
+echo "Please select the deployment method："
+echo "1) Docker deployment (suitable for stand-alone deployment in small competitions)"
+echo "2) docker+k3s deployment (suitable for single or multi-machine deployment for large-scale competitions)"
 while true; do
-    read -p "请输入您的选择: " setup
+    read -p "Please enter your selection: " setup
 
     case $setup in
         1)
-            echo "选择docker部署..."
+            echo "Choose docker deployment..."
             sed -i "s|SETUPTYPE|Docker|g" ./config-auto/gz/appsettings.json
             sed -i "s|#K3S||g" ./config-auto/gz/appsettings.json
             sed -i "s|# - \"/var/run/docker.sock:/var/run/docker.sock\"|- \"/var/run/docker.sock:/var/run/docker.sock\"|g" ./config-auto/gz/docker-compose.yaml
             break
             ;;
         2)
-            echo "选择docker+k3s部署..."
+            echo "Choose docker+k3s deployment..."
             hostnamectl set-hostname k3s-master
             sed -i "s|SETUPTYPE|Kubernetes|g" ./config-auto/gz/appsettings.json
             sed -i "s|#K3S|,\"KubernetesConfig\": {\"Namespace\": \"gzctf-challenges\",\"ConfigPath\": \"kube-config.yaml\",\"AllowCIDR\": [\"10.0.0.0/8\"],\"DNS\": [\"8.8.8.8\",\"223.5.5.5\"]}|g" ./config-auto/gz/appsettings.json
             sed -i "s|# - \"./kube-config.yaml:/app/kube-config.yaml:ro\"|- \"./kube-config.yaml:/app/kube-config.yaml:ro\"|g" ./config-auto/gz/docker-compose.yaml
             while true; do
-                read -p "请输入k3s节点机器数量（本机除外, 单机部署填 0 ）： " hostNum
+                read -p "Please enter the number of k3s node machines (except this machine, for single machine deployment, fill in 0 ）： " hostNum
                 if [ -z "$hostNum" ]; then
-                    echo "输入为空，请重新输入。"
+                    echo "The input is empty, please re-enter。"
                 elif ! echo "$hostNum" | grep -qE '^[0-9]+$'; then
-                    echo "输入不是数字，请重新输入。"
+                    echo "The input is not a number, please re-enter。"
                 else
-                    echo "设置 $hostNum 个节点..."
+                    echo "set up $hostNum Nodes..."
                     ip_array=()
                     for i in $(seq 1 $hostNum); do
                         while true; do
-                            read -p "请输入k3s节点 $i 的ip地址（将会影响自动连接脚本）： " hostIP
-                            echo "请确认k3s节点 $i 的ip地址（必须无错误，否则会出现连接不上的情况）：$hostIP "
-                            echo "1) 确认"
-                            echo "2) 重新输入"
-                            read -p "是否确认？: " confirm
+                            read -p "Please enter the IP address of the k3s node $i (will affect the automatic connection script）： " hostIP
+                            echo "Please confirm the IP address of the k3s node $i (there must be no error, otherwise the connection will fail.）：$hostIP "
+                            echo "1) confirm"
+                            echo "2) Re-enter"
+                            read -p "Confirm？: " confirm
                             case $confirm in
                                 1)
-                                    echo "确认节点 $i 的ip地址：$hostIP"
+                                    echo "Confirm the IP address of node $i：$hostIP"
                                     ip_array+=($hostIP)
                                     break
                                     ;;
                                 2)
                                     ;;
                                 *)
-                                    echo "无效的选择！"
+                                    echo "Invalid selection！"
                                     ;;
                             esac
                         done
@@ -263,52 +263,52 @@ while true; do
             break
             ;;
         *)
-            echo "无效的选择，请重新输入："
+            echo "Invalid selection, please re-enter："
             ;;
     esac
 done
 
-echo "请选择赛题镜像拉取站点："
-echo "1) dockerhub（需设置docker镜像源）"
-echo "2) 阿里云镜像服务（需登录阿里云docker账号）"
+echo "Please select the mirror pull site for the contest topic："
+echo "1) dockerhub (need to set up docker image source）"
+echo "2) Alibaba Cloud Image Service (You need to log in to the Alibaba Cloud Docker account）"
 while true; do
-    read -p "请输入您的选择: " source
+    read -p "Please enter your selection: " source
 
     case $source in
         1)
-            echo "选择dockerhub..."
-            read -p "输入镜像源（默认内置源）: " source_add
+            echo "Select DockerHub..."
+            read -p "Input mirror source (default built-in source）: " source_add
 
             if [ -z "$source_add" ]; then
                 source_add="https://hub.docker-alhk.dkdun.com/"
             fi
-            echo "使用的镜像源是: $source_add"
+            echo "The mirror source used is: $source_add"
             sed -i "s|\[\"[^\"]*\"\]|\[\"$source_add\"\]|g" ./config-auto/docker/daemon.json
             sed -i "s|https://hub.docker-alhk.dkdun.com/|$source_add|g" ./config-auto/agent/agent-temp.sh
             sed -i "s|https://hub.docker-alhk.dkdun.com/|$source_add|g" ./config-auto/k3s/registries.yaml
             break
             ;;
         2)
-            echo "选择阿里云镜像服务..."
+            echo "Select Alibaba Cloud Image Service..."
             login_docker
             sed -i "s|login=0|login=1|g" ./config-auto/agent/agent-temp.sh
             break
             ;;
         *)
-            echo "无效的选择，请重新输入："
+            echo "Invalid selection, please re-enter："
             ;;
     esac
 done
 
-echo "请选择是否开启流量代理："
-echo "1) 是"
-echo "2) 否"
+echo "Please select whether to enable traffic proxy："
+echo "1) yes"
+echo "2) no"
 while true; do
-    read -p "请输入您的选择: " proxy
+    read -p "Please enter your selection: " proxy
 
     case $proxy in
         1)
-            echo "选择开启流量代理..."
+            echo "Select Enable Traffic Proxy..."
             sed -i "s|Default|PlatformProxy|g" ./config-auto/gz/appsettings.json
             sed -i "s|\"EnableTrafficCapture\": false,|\"EnableTrafficCapture\": true,|g" ./config-auto/gz/appsettings.json
             if [ "$setup" -eq 1 ]; then
@@ -317,52 +317,52 @@ while true; do
             break
             ;;
         2)
-            echo "选择关闭流量代理..."
+            echo "Select Turn off traffic proxy..."
             break
             ;;
         *)
-            echo "无效的选择，请重新输入："
+            echo "Invalid selection, please re-enter："
             ;;
     esac
 done
 
-echo "请选择是否开启smtp邮件服务："
-echo "1) 是"
-echo "2) 否"
+echo "Please select whether to enable SMTP mail service："
+echo "1) yes"
+echo "2) no"
 while true; do
-    read -p "请输入您的选择: " smtp
+    read -p "Please enter your selection: " smtp
 
     case $smtp in
         1)
-            echo "选择开启smtp邮件服务..."
+            echo "Select Enable SMTP mail service..."
             set_smtp
             break
             ;;
         2)
-            echo "选择关闭smtp邮件服务..."
+            echo "Select Close SMTP mail service..."
             sed -i "s|SMTP_PORT|1|g" ./config-auto/gz/appsettings.json
             break
             ;;
         *)
-            echo "无效的选择，请重新输入："
+            echo "Invalid selection, please re-enter："
             ;;
     esac
 done
 
 if [ "$net" -eq 2 ]; then
     while true; do
-        echo "请选择是否解析了域名(国内服务器需备案！！！)："
-        echo "1) 是"
-        echo "2) 否"
-        read -p "请输入您的选择: " select
+        echo "Please select whether the domain name has been resolved (domestic servers need to be registered！！！)："
+        echo "1) yes"
+        echo "2) no"
+        read -p "Please enter your selection: " select
         case $select in
             1)
-                read -p "请输入解析的域名: " domain
+                read -p "Please enter the resolved domain name: " domain
 
                 domain_ip=$(dig +short "$domain")
 
                 if [ "$public_ip" = "$domain_ip" ]; then
-                    echo "设置域名 $domain 成功..."
+                    echo "Set up your domain name $domain success..."
                     sed -i "s|DOMAIN|$domain|g" ./config-auto/gz/appsettings.json
                     sed -i "s|DOMAIN|$domain|g" ./config-auto/caddy/Caddyfile
                     sed -i "s|SERVER|$public_ip|g" ./config-auto/agent/agent-temp.sh
@@ -370,20 +370,20 @@ if [ "$net" -eq 2 ]; then
                     sed -i "s|PORT|81|g" ./config-auto/gz/docker-compose.yaml
                     break
                 else
-                    echo "域名 $domain 解析的 IP ($domain_ip) 不是本机的公网 IP ($public_ip)"
-                    echo "请检查域名解析是否正确!"
+                    echo "domain name $domain Analytical IP ($domain_ip) Not the local public network IP ($public_ip)"
+                    echo "Please check whether the domain name resolution is correct.!"
                     select=2
                 fi
                 ;;
             2)
-                echo "未解析域名..."
+                echo "Unresolved domain name..."
                 sed -i "s|DOMAIN|$public_ip|g" ./config-auto/gz/appsettings.json
                 sed -i "s|SERVER|$public_ip|g" ./config-auto/agent/agent-temp.sh
                 set_port
                 break
                 ;;
             *)
-                echo "无效的选择，请重新输入："
+                echo "Invalid selection, please re-enter："
                 ;;
         esac
     done
@@ -395,17 +395,17 @@ if [ "$net" -eq 1 ]; then
 fi
 
 while true; do
-    read -p "请设置管理员密码(必须包含大写字母、小写字母和数字): " adminpasswd
+    read -p "Please set an administrator password (must contain uppercase letters, lowercase letters and numbers): " adminpasswd
     if [[ $adminpasswd =~ [A-Z] && $adminpasswd =~ [a-z] && $adminpasswd =~ [0-9] ]]; then
         sed -i "s|ADMIN_PASSWD|$adminpasswd|g" ./config-auto/gz/docker-compose.yaml
-        echo "密码设置成功！"
+        echo "Password set successfully！"
         break
     else
-        echo "密码必须包含大写字母、小写字母和数字，请重新输入。"
+        echo "The password must contain uppercase letters, lowercase letters and numbers. Please re-enter。"
     fi
 done
 
-green_echo "开始部署..."
+green_echo "Start deployment..."
 
 systemctl disable --now ufw && systemctl disable --now iptables
 mv ./config-auto/docker/daemon.json /etc/docker/
@@ -421,30 +421,30 @@ else
             curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_EXEC="--kube-controller-manager-arg=node-cidr-mask-size=16" INSTALL_K3S_EXEC="--docker" INSTALL_K3S_MIRROR=cn sh -s - --node-external-ip="$public_ip" --flannel-backend=wireguard-native --flannel-external-ip --disable=traefik --kube-apiserver-arg=service-node-port-range=20000-50000 --kubelet-arg=config=/etc/rancher/k3s/kubelet.config
             if ! command -v kubectl &> /dev/null
             then
-                red_echo "k3s 安装失败."
+                red_echo "k3s Installation failed."
                 exit 1
             else
-                green_echo "k3s 安装成功."
+                green_echo "k3s Installation Successful."
             fi
             sed -i "s|sh -|sh -s - --node-external-ip=PUBLIC_IP|g" config-auto/agent/agent-temp.sh
         else
             curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_EXEC="--kube-controller-manager-arg=node-cidr-mask-size=16" INSTALL_K3S_EXEC="--docker" INSTALL_K3S_MIRROR=cn sh -s - --disable=traefik --kube-apiserver-arg=service-node-port-range=20000-50000 --kubelet-arg=config=/etc/rancher/k3s/kubelet.config
             if ! command -v kubectl &> /dev/null
             then
-                red_echo "k3s 安装失败."
+                red_echo "k3s Installation failed."
                 exit 1
             else
-                green_echo "k3s 安装成功."
+                green_echo "k3sInstallation Successful."
             fi
         fi
     else
         curl -sfL https://rancher-mirror.rancher.cn/k3s/k3s-install.sh | INSTALL_K3S_EXEC="--kube-controller-manager-arg=node-cidr-mask-size=16" INSTALL_K3S_EXEC="--docker" INSTALL_K3S_MIRROR=cn sh -s - --disable=traefik --kube-apiserver-arg=service-node-port-range=20000-50000 --kubelet-arg=config=/etc/rancher/k3s/kubelet.config
         if ! command -v kubectl &> /dev/null
         then
-            red_echo "k3s 安装失败."
+            red_echo "k3s Installation failed."
             exit 1
         else
-            green_echo "k3s 安装成功."
+            green_echo "k3s Installation Successful."
         fi
     fi
     token=$(sudo cat /var/lib/rancher/k3s/server/token)
@@ -479,20 +479,20 @@ if [ "$net" -eq 2 ]; then
     if [ "$select" -eq 1 ]; then
         if ! command -v caddy &> /dev/null
         then
-            echo "caddy 未安装，执行安装."
+            echo "caddy Not installed, install."
             curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
             curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
             sudo apt-get -y update
             sudo DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install caddy
         else
-            green_echo "caddy 已安装，跳过安装."
+            green_echo "caddy Already installed, skip installation."
         fi
 
         if ! command -v caddy &> /dev/null
         then
-            red_echo "caddy 安装失败."
+            red_echo "caddy Installation failed."
         else
-            green_echo "caddy 安装成功."
+            green_echo "caddy Installation Successful."
             mkdir -p caddy
             mv ./config-auto/caddy/Caddyfile ./caddy/
             
@@ -502,17 +502,17 @@ if [ "$net" -eq 2 ]; then
 
             if ps -p $PID_TO_CHECK > /dev/null
             then
-                green_echo "caddy 进程在运行中."
+                green_echo "caddy Process is running."
             else
-                red_echo "caddy 启动失败！"
+                red_echo "caddy Startup failure！"
             fi
             cd ../
         fi
     else
-        echo "未解析域名, 跳过caddy配置..."
+        echo "Unresolved domain name, skip caddy configuration..."
     fi
 else
-    echo "内网部署, 跳过caddy配置..."
+    echo "Intranet deployment, skip caddy configuration..."
 fi
 
 rm -rf config-auto
@@ -520,14 +520,14 @@ rm -rf config-auto
 cd GZCTF
 docker compose up -d
 if [ $? -eq 0 ]; then
-    green_echo "GZCTF 启动成功."
+    green_echo "GZCTF Startup Success."
 else
-    red_echo "GZCTF 启动失败."
+    red_echo "GZCTF Startup failed."
     exit 1
 fi
 
 green_echo "============"
-green_echo "||部署成功!||"
+green_echo "||Deployment Success!||"
 green_echo "============"
 
 echo "==============================================================================================================="
@@ -535,36 +535,36 @@ echo "==========================================================================
 if [ "$setup" -eq 2 ]; then
     echo "---------------------------------------------------------------------------------------------------------------"
     if [ "$hostNum" -eq 0 ]; then
-        green_echo "当前为单机部署, 无需执行节点机器加入脚本"
+        green_echo "Currently it is a single machine deployment, no need to execute the node machine joining script"
     else
-        green_echo "请将 k3s-agent 文件夹中的脚本拷贝到相应的其他节点机器上，并执行 k3s-agent-*.sh"
+        green_echo "Please copy the script in the k3s-agent folder to the corresponding other node machines and execute k3s-agent-*.sh"
     fi
-    echo "如有新加机器, 请使用 k3s-agent 文件夹中的 add-agent.sh 脚本添加, 并且请手动添加 <ip> <hostname> 到本机 /etc/hosts 中"
-    echo "使用方法: bash add-agent.sh [ip] [hostname]"
-    echo "其中 ip 为新加机器的ip地址,  hostname 为新加机器的主机名, 都是必填项"
-    echo "主机名必须符合标准：长度在1到255之间，只能包含字母、数字、连字符。且不能与已有主机名重复！！！"
+    echo "If you add a new machine, please use the k3s-agent folder add-agent.sh Script added, and please add manually <ip> <hostname> To this machine /etc/hosts 中"
+    echo "How to use: bash add-agent.sh [ip] [hostname]"
+    echo "Where ip is the ip address of the newly added machine,  hostname is the hostname of the newly added machine, both are required"
+    echo "The host name must meet the following standards: the length must be between 1 and 255 characters, and can only contain letters, numbers, and hyphens. It must not be the same as an existing host name.！！！"
     echo "例如: bash add-agent.sh 10.10.10.10 k3s-agent-example"
-    green_echo "如有需求使用QQ机器人, 可以使用项目: https://github.com/MoRan23/GZCTF-BOT-QQ"
+    green_echo "If you need to use QQ robot, you can use the project: https://github.com/MoRan23/GZCTF-BOT-QQ"
     echo "---------------------------------------------------------------------------------------------------------------"
 fi
 
-green_echo "GZCTF 相关文件已经保存在当前目录下的 GZCTF 文件夹中"
+green_echo "GZCTF The relevant files have been saved in the GZCTF folder in the current directory"
 if [ "$net" -eq 2 ]; then
     if [ "$select" -eq 1 ]; then
-        green_echo "Caddy 相关文件已经保存在当前目录下的 caddy 文件夹中"
+        green_echo "CaddyThe relevant files have been saved in the caddy folder in the current directory"
     fi
 fi
 
 if [ "$net" -eq 2 ]; then
     if [ "$select" -eq 1 ]; then
-        green_echo "请访问 https://$domain 进行后续配置"
-        green_echo "或者访问 http://$public_ip:81 进行后续配置"
+        green_echo "Please visit https://$domain Perform subsequent configuration"
+        green_echo "Or visit http://$public_ip:81 Perform subsequent configuration"
     else
-        green_echo "请访问 http://$public_ip:$gz_port 进行后续配置"
+        green_echo "Please visit http://$public_ip:$gz_port Perform subsequent configuration"
     fi
 else
-    green_echo "请访问 http://$private_ip:$gz_port 进行后续配置"
+    green_echo "Please visit http://$private_ip:$gz_port Perform subsequent configuration"
 fi
-green_echo "用户名: admin"
-green_echo "密码: $adminpasswd"
+green_echo "username: admin"
+green_echo "password: $adminpasswd"
 echo "==============================================================================================================="
